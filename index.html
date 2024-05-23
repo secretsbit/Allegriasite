@@ -1,0 +1,219 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Tecniche per la gestione dell'I/O</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<div class="logo">
+							<img src="https://i.pinimg.com/originals/60/23/3f/60233f73ed25bdd1a1ca6b55ec49e227.gif" style="width: 80px; height: 80px; border-radius: 50%;">
+						</div>
+						<div class="content">
+							<div class="inner">
+								<h1>Tecniche per la gestione dell'I/O</h1>
+								<p>Il gruppo allegria ha creato un sito per l'apprendimento dei seguenti argomenti: - polling - wait - interrupt -dma - come comunica il pc con gli I/O device</p>
+							</div>
+						</div>
+						<nav>
+							<ul>
+								<li><a href="#intro">DMA</a></li>
+								<li><a href="#work">POLLING</a></li>
+								<li><a href="#about">WAIT</a></li>
+								<li><a href="#contact">INTERRUPT</a></li>
+								<li><a href="#elements">PC -> I/O</a></li>
+							</ul>
+						</nav>
+					</header>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Intro -->
+							<article id="intro">
+								<h2 class="major">Direct Memory Access</h2>
+								<h3 class="major">INTRODUZIONE</h3>
+								<p>In informatica il DMA (Direct Memory Access, "accesso diretto alla memoria") di un computer è quel meccanismo che permette ad altri sottosistemi, quali ad esempio le periferiche, di accedere direttamente alla memoria interna per scambiare dati, in lettura e/o scrittura, senza coinvolgere l'unità di controllo (CPU) per ogni byte trasferito tramite l'usuale meccanismo dell'interrupt e la successiva richiesta dell'operazione desiderata, ma generando un singolo interrupt per blocco trasferito.</p>
+								<h3 class="major">1. DESCRIZIONE</h3>
+								<p>Tramite il controllore di accesso diretto (DMAC), ha quindi il compito di gestire i dati passanti nel BUS permettendo a periferiche che lavorano a velocità diverse di comunicare senza assoggettare la CPU a un enorme carico di interrupt che ne interromperebbero continuamente il rispettivo ciclo di elaborazione. <br>
+									Essenzialmente, in un trasferimento DMA un blocco di memoria viene copiato da una periferica a un'altra. <br>
+									
+									Il distacco del bus dati per assegnarlo al controllo del DMA, che questi utilizza per il trasferimento dei dati tra le due periferiche, avviene tramite dei bus switches su richiesta del DMAC.<br>
+									La CPU si limita a dare avvio al trasferimento rilasciando il bus dati, mentre il trasferimento vero e proprio è svolto dal controller DMA (DMAC).<br>
+									
+									Il DMA gestisce i trasferimenti tra CPU e periferiche tramite l'utilizzo di diverse linee (Acknowledge, richiesta, controllo) e dei due registri  DC (Data Counter) e IOAR (Input/Output Address Register). <br> Nel momento in cui la CPU necessità di dati presenti in memoria carica in IOAR l'indirizzo dal quale iniziare l'operazione e in DC il numero di dati consecutivi da trattare, informando il DMA su un ulteriore bit se si tratta di un'operazione di lettura o scrittura. <br> A questo punto il DMA invia la richiesta alla periferica e nel momento in cui riceve il segnale di acknowledge inizia il trasferimento. <br> Ad ogni passo viene incrementato IOAR e decrementato DC finché DC non è uguale a 0.</p>
+								<h3 class="major">2. 3 TIPI DI TRASFERIMENTO</h3>
+								<p>Il trasferimento tra DMA e I/O può avvenire in diversi modi:
+								<ul>
+									<li><strong>Burst Transfer</strong>: Prevede che, una volta iniziato il trasferimento, il DMA mantenga il controllo del BUS a discapito della CPU, finché esso non è terminato: l'accesso al bus da parte della CPU resta negato durante tutto il trasferimento. <br> Ciò presuppone che la periferica e la memoria consentano un trasferimento tanto veloce e duraturo quanto necessità il DMA Controller</li>
+									<li><strong>Cycle Stealing</strong>: Il DMA esegue il trasferimento di parole un solo ciclo completo alla volta (cioè per ogni ciclo si interfaccia con la periferica ed esegue il trasferimento solo se è pronta, in altre parole effettuando un handshaking). <br> Come risultato, il tempo durante il quale alla CPU è interdetto l'accesso al bus dati è più frammentato</li>
+									<li><strong>Transparent/Hidden</strong>: Il DMA occupa il BUS solo quando la CPU non ne ha bisogno. Per far sì che ciò avvenga il DMA sorveglia la CPU e inizia un ciclo di bus solo se l'istruzione in esecuzione nella CPU è abbastanza lunga da consentirlo e se tale istruzione non riguarda trasferimenti sul BUS </li>
+								</ul>
+								<h3 class="major">3. Funzionamento</h3>
+								<p>Il chip DMA ha al suo interno almeno quattro registri accessibili dal software in esecuzione nella CPU:</p>
+								<ol>
+									<li>Il primo contiene l'indirizzo di memoria di partenza per la lettura o la scrittura</li>
+									<li>Il secondo conta il numero di byte (o parole) da trasferire</li>
+									<li>Il terzo specifica il numero di dispositivo o lo spazio d'indirizzamento di I/O da usare, il che determina il dispositivo di I/O desiderato</li>
+									<li>Il quarto determina se i dati vanno letti dal dispositivo di I/O oppure se devono essere scritti su di esso</li>
+								</ol>
+								<p>Quindi per trasferire un blocco di 32 byte dall'indirizzo di memoria 100 al terminale (sia questo il dispositivo 4) la CPU scrive i numeri 100, 32 e 4 nei primi tre registri DMA, più il codice per la scrittura (in questo caso supponiamo essere 1) nel quarto registro. <br> A questo punto il DMA effettua una richiesta di bus per leggere il byte 100 dalla memoria, analogamente a come farebbe la CPU. <br>Una volta ottenuto il byte, il controllore DMA effettuerebbe una richiesta di I/O al dispositivo 4 finalizzata alla scrittura del byte. <br> Dopo il completamento di queste operazioni, il controllore DMA incrementa di 1 il suo registro d'indirizzo e decrementa di 1 il suo registro contatore. <br>Se il registro contatore è ancora positivo, si prosegue con la lettura di memoria di un altro byte e con la relativa scrittura nel dispositivo.</p>
+								<p>Infine quando il contatore si azzera, il controllore DMA smette di trasferire dati e manda un impulso sulla linea di interrupt collegata al chip della CPU. <br>In presenza di DMA, la CPU deve solo inizializzare pochi registri, dopo di che è libera di svolgere altri compiti fino al completamento del trasferimento, segnalato da un interrupt proveniente dal controllore DMA. <br></p>
+								<hr>
+								<p>Anche se con il DMA la CPU viene sollevata dal carico pesante dell'I/O, il procedimento non è del tutto gratuito. <br> Se un dispositivo ad alta velocità, come per esempio un disco, è in fase di trasferimento controllato dal DMA, ci vorranno molti cicli di bus per gli accessi alla memoria e al dispositivo. <br> Durante questi cicli la CPU deve restare in attesa (il DMA ha una priorità di bus sempre maggiore di quella della CPU, perché i dispositivi di I/O difficilmente tollerano ritardi). <br>Il fenomeno che si verifica quando il controllore DMA sottrae cicli di bus alla CPU si dice appropriazione di cicli (cycle stealing, "furto di cicli"). <br> Nientemeno il guadagno che si ottiene nel non dover gestire un interrupt per byte (o per parola) ripaga largamente del danno causato dall'appropriazione di cicli.</p>
+								<hr>
+								<p>Il DMA controller viene “programmato” dalla CPU, che gli fornisce i dati necessari ad effettuare ciascun trasferimento, che sono:</p>
+								<ul>
+									<li>indirizzo iniziale dell’area di memoria di lavoro destinata ai dati da trasferire (Start Address)</li>
+									<li>numero di byte da trasferire</li>
+									<li>direzione del trasferimento</li>
+								</ul>
+								<table>
+									<tr>
+										<th>PRO</th>
+										<th>CONTRO</th>
+									</tr>
+									<tr>
+										<td>Tempi di trasferimento molto brevi.  </td>
+										<td>costo del controllore di DMA e dei circuiti ausiliari necessari</td>
+									</tr>
+									<tr>
+										<td>Efficienza è molto elevata: la CPU subisce una sospensione delle sue attività sul bus per un tempo
+											brevissimo. </td>
+										<td>notevole rigidità, nel senso che consente solo semplici trasferimenti a conteggio prefissato.  </td>
+									</tr>
+								</table>
+							</article>
+
+						<!-- Work -->
+							<article id="work">
+								<h2 class="major">POLLING</h2>
+								<h3 class="major">1. DEFINIZIONE</h3>
+								<p>il polling non è un meccanismo hardware, è un protocollo in cui la CPU controlla costantemente se il dispositivo 
+									necessita di attenzione. <br>Ogni volta che il dispositivo comunica alla PU che desidera l'elaborazione hardware, durante il 
+									polling la PU continua a chiedere al dispositivo I/O se desidera o meno l'elaborazione della CPU.<br> La CPU controlla 
+									incessantemente ogni singolo dispositivo ad essa collegato per scoprire se qualche dispositivo richiede o meno l'attenzione 
+									dell'hardware.<br> Ogni dispositivo è dotato di un bit pronto per i comandi che indica lo stato di quel dispositivo, ovvero se 
+									si tratta di un comando che deve essere letto o meno dall'hardware. <br>Se il bit di comando è settato a uno, allora è un comando 
+									da leggere, altrimenti se il bit è settato a zero, non ci sono comandi.</p>
+								<hr>
+								<h3 class="major">2. COME FUNZIONA?</h3>
+									<ol>
+										<li>Nel polling , la CPU controlla costantemente se il dispositivo necessita di attenzione.</li>
+										<li>Il polling non è un meccanismo hardware, è un protocollo.</li>
+										<li>Durante il polling, il dispositivo è gestito dalla CPU.</li>
+										<li>Nel polling la CPU valuta costantemente il dispositivo a intervalli regolari o adeguati.</li>
+										<li>Durante il polling, il bit Comando pronto viene utilizzato come indicazione per indicare che il dispositivo richiede assistenza.</li>
+										<li>Nel polling, il processore spreca innumerevoli cicli del processore controllando ripetutamente il bit di controllo di ciascun dispositivo.</li>
+									</ol>
+							</article>
+
+						<!-- About -->
+							<article id="about">
+								<h2 class="major">WAIT</h2>
+								<h3 class="major">1. INTRODUZIONE</h3>
+								<p>Uno stato di attesa è un ritardo del processore durante l'accesso alla memoria esterna o a un dispositivo lento. Questo ritardo corrisponde ai cicli di inattività della CPU, che è molto più veloce rispetto ad altri componenti come la memoria principale. </p>
+								<h3 class="major">2. RIDUZIONE DEGLI STATI D'ATTESA</h3>
+								<p>Ad esempio, quando la CPU richiede dati dalla RAM, inserisce l'indirizzo sul bus degli indirizzi e attende finché non ottiene i dati, durante questo tempo non può eseguire ulteriori istruzioni. Gli stati di attesa sono considerati uno spreco delle prestazioni del processore. Tuttavia, i progetti moderni tentano di ridurli tramite tecniche come cache della CPU, pipeline di istruzioni, prefetch, previsione dei rami e multithreading simultaneo. Nessuna tecnica da sola può eliminarli completamente, ma insieme possono ridurre significativamente il problema.</p>
+								<h3 class="major">3. UN PROBLEMA DI LATENZA</h3>
+								<p>I microprocessori funzionano molto più velocemente degli altri sottosistemi, inclusa la memoria, che non può fornire dati alla stessa velocità. Nel 2011, i processori come Intel Core 2 e AMD Athlon 64 X2 avevano un clock di diversi GHz, con un ciclo di clock inferiore a 1 nanosecondo, mentre la memoria principale aveva una latenza di circa 15–30 ns. Quando il processore deve accedere alla memoria esterna, inserisce l'indirizzo sul bus degli indirizzi e attende la risposta, che può arrivare decine o centinaia di cicli dopo.</p>
+							</article>
+
+						<!-- Contact -->
+							<article id="contact">
+								<h2 class="major">Interrupt</h2>
+
+								<section>
+									<h3 class="major">1. INTRODUZIONE</h3>
+									<p>Per approfondire ulteriormente il concetto di interrupt nei sistemi informatici, esaminiamo più dettagliatamente come vengono gestiti gli interrupt a livello hardware e software, il ruolo degli interrupt nel contesto dei sistemi operativi e come vengono implementati in architetture moderne.</p>
+									<p>In generale l’interrupt è quel segnale che indica la necessità di attenzione da parte di una periferica, consentendo l’interruzione di processi.</p>
+									<hr/>
+									<h3 class="major">2. LIVELLI DI INTERRUPT</h3>
+									<p>Nei moderni sistemi informatici, gli interrupt possono essere classificati in diversi livelli o tipi, a seconda del loro scopo e della loro fonte:</p>
+									<ol>
+										<li><b>Interrupt di hardware</b><br>Interrupt di periferica: Generati da controller di periferiche esterne (come schede di rete, dischi rigidi, mouse, tastiera) per indicare al processore che è necessario gestire un evento I/O. In questo caso l’interrupt costringe il processore a memorizzare il suo stato di esecuzione fino all’arrivo del segnale, che attiva la subroutine, viene quindi eseguita l’operazione richiesta e successivamente si riprende con il processo. Viene quindi utilizzata molta cpu nella gestione di questo interrupt.
+											A loro volta gli interrupt di hardware sono suddivisibili in mascherabili e non. Quelli mascherabili sono rifiutabili dal processore, sono quindi a bassa priorità. <br>Quelli non mascherabili sono riservati ad eventi come errori irreversibili della memoria, non possono quindi essere rifiutati.
+										</li>
+										<li><b>Interrupt di software</b><br>Sono delle istruzioni assembly, tipo INT xx o SYSCALL, che possono essere assimilate alle chiamate di sottoprogrammi, ma che sfruttano il meccanismo delle interruzioni per passare il controllo dal programma chiamante a quello chiamato, e viceversa; vengono utilizzati per accedere direttamente alle risorse del sistema operativo.</li>
+									</ol>
+									<hr/>
+									<h3 class="major">3. GESTIONE DEGLI INTERRUPT</h3>
+									<p><b>Lato hardware:</b><br><ul>
+										<li><b>Controllore di interrupt</b>: Un controller di interrupt assegna priorità agli interrupt in base al tipo e li invia al processore.</li>
+										<li><b>Tabella dei vettori di interrupt</b>: Contiene gli indirizzi di memoria dei gestori di interrupt</li>
+									</ul></p>
+									<p><b>Lato software</b>:<br><ul>
+										<li><b>Routine di gestione degli interrupt (ISR)</b>:<br>È una routine attivata dal sistema operativo, viene eseguita in risposta all’interrupt. Quando arriva un interrupt, la CPU deve eseguire una specifica routine di gestione dell'interruzione (ISR) designata dal programmatore per quell'interrupt specifico. Per assicurare il corretto funzionamento del meccanismo di interruzione, la CPU deve prima eseguire una commutazione di contesto, salvando lo stato attuale (contesto) dell'esecuzione del programma, inclusi il registro del Program Counter (PC) e lo stato di interrompibilità del processore. Questo è necessario perché l'ISR può modificare variabili o registri importanti, e la CPU non può sapere in anticipo cosa sarà modificato.</li>
+									</ul></p>
+									<hr/>
+									<p>Nei moderni sistemi i gestori di interrupt sono divisi in due livelli:</p>
+									<ul>
+										<li><b>Gestori di primo livello (FLIH):</b> Questi gestori funzionano come le tradizionali routine di interrupt. Quando si verifica un interrupt, il FLIH gestisce la commutazione di contesto e schedula l'esecuzione del gestore di secondo livello (SLIH). Il FLIH non gestisce direttamente l'interrupt, ma piuttosto prepara l'ambiente per il gestore di secondo livello, salvando eventuali informazioni cruciali disponibili al momento dell'interrupt.</li>
+										<li><b>Gestori di secondo livello (SLIH):</b> Il gestore SLIH rimane in attesa nella coda di esecuzione del sistema operativo. Quando la CPU dispone di tempo per eseguire il codice, il SLIH viene eseguito per gestire l'interrupt. Il compito del SLIH è quello di gestire l'evento che ha innescato l'interrupt, utilizzando le informazioni preparate dal FLIH.</li>
+									</ul>
+									<hr>
+									<h3 class="major">4. IMPLEMENTAZIONE NELLE ARCHITETTURE MODERNE</h3>
+									<p>Le moderne CPU includono circuiti hardware dedicati per gestire gli interrupt in modo efficiente:</p>
+									<ul>
+										<li><b>Unità di gestione degli interrupt (IMU):</b> Si occupa di identificare, gestire e priorizzare gli interrupt in arrivo.</li>
+										<li><b>Gestione della cache durante l'interrupt:</b> Alcune architetture possono richiedere operazioni speciali per mantenere la coerenza della cache durante il passaggio a una ISR.</li>
+									</ul>
+									<h3 class="major">CONSIDERAZIONI DI PROGETTAZIONE</h3>
+									<p>La gestione degli interrupt richiede attenzione ai dettagli per garantire che il sistema sia affidabile e reattivo:</p>
+									<ul>
+										<li><b>Evitare le deadlock:</b> Le ISR devono essere scritte in modo da evitare situazioni di blocco che potrebbero verificarsi se vengono interrotte.</li>
+										<li><b>Tempistiche critiche: </b>Alcune ISR devono essere eseguite in tempi molto brevi per evitare ritardi nell'elaborazione degli interrupt successivi.</li>
+										<li><b>Test e debug: </b>La gestione degli interrupt può complicare il test e il debug del software, specialmente in sistemi complessi.</li>
+									</ul>
+									<p>In conclusione, gli interrupt sono un elemento cruciale nell'architettura dei computer moderni, consentendo l'interazione efficiente tra hardware e software e supportando funzionalità chiave come multitasking, gestione delle periferiche e gestione delle eccezioni. La loro gestione efficiente è fondamentale per garantire prestazioni ottimali e stabilità dei sistemi informatici.</p>
+								</section>
+							</article>
+
+						<!-- Elements -->
+							<article id="elements">
+								<h2 class="major">COME IL PC COMUNICA CON</h2>
+								<h2 class="major">I DISPOSITIVI INPUT/OUTPUT</h2>
+								<section>
+									<h3 class="major">1. METODI</h3>
+									<p>La CPU comunica con i dispositivi di Input/Output (I/O) attraverso due principali metodi:</p>
+									<ol>
+										<li><b>Istruzioni di I/O dedicate:</b> Questo metodo utilizza istruzioni specifiche per controllare i dispositivi di I/O. Sebbene sia facile da gestire, richiede l'accesso tramite il kernel, rendendolo inutilizzabile direttamente dall'utente.
+										</li>
+										<li><b>Mappatura I/O in memoria:</b> In questo approccio, una parte dello spazio di indirizzamento è collegata ai registri del controller del dispositivo di I/O. È più efficiente e flessibile, e il controllo è affidato alle tecniche di gestione della memoria, come la paginazione.
+										</li>
+									</ol>
+									<hr/>
+									<h3>2. TECNICHE DI TRASFERIMENTO DATI</h3>
+									<p>Per quanto riguarda le tecniche di trasferimento dei dati:</p>
+									<ul>
+										<li><b>Programmed I/O: </b>La CPU manda un comando di I/O e attende che l'operazione sia completata, verificando continuamente lo stato del dispositivo attraverso un loop busy-wait (polling). È efficiente solo se la velocità del dispositivo è simile a quella della CPU.
+										</li>
+										<li><b>Interrupt-driven I/O: </b>La CPU manda un comando di I/O e il processo viene sospeso. Quando l'I/O è terminato, un interrupt segnala che i dati sono pronti e il processo può essere ripreso. Nel frattempo, la CPU può eseguire altri processi o thread.
+											In entrambi i casi, viene utilizzato un vettore di interrupt, una tabella che associa ad ogni interrupt l'indirizzo di una routine di gestione corrispondente. Gli interrupt vengono impiegati anche per segnalare eccezioni, come la divisione per zero.</li>
+									</ul>
+								</section>
+							</article>
+					</div>
+				<!-- Footer -->
+					<footer id="footer">
+						<p class="copyright">&copy; BY FEDERICO SAVORETTI, BREGA GIANLUIGI, MAGAZZINO MANUEL, ILYAS CHACKIR, CASTAGNA DANIEL.</p>
+					</footer>
+			</div>
+		<!-- BG -->
+			<div id="bg"></div>
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+	</body>
+</html>
